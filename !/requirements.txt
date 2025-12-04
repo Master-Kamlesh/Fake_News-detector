@@ -1,0 +1,8 @@
+requests
+SpeechRecognition
+transformers
+torch
+beautifulsoup4
+flask
+gunicorn
+pi

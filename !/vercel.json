@@ -1,0 +1,25 @@
+{
+  "name": "fake-news-detector",
+  "version": "1.0.0",
+  "description": "AI-powered fake news detection web application",
+  "framework": "flask",
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "3000mb",
+        "runtime": "python3.11"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ],
+  "env": {
+    "FLASK_ENV": "production"
+  }
+}
