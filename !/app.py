@@ -13,15 +13,30 @@ Then visit: http://localhost:5000
 
 from flask import Flask, render_template, request, jsonify
 import json
-from fake_news_detector import FakeNewsDetector
-from url_analyzer import URLArticleAnalyzer
 import traceback
+import sys
+import os
+from flask_cors import CORS
+
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
 
-# Initialize detector (rule-based for speed)
-detector = FakeNewsDetector(use_transformer=False)
+# Initialize detector with error handling
+try:
+    from fake_news_detector import FakeNewsDetector
+    detector = FakeNewsDetector(use_transformer=False)
+except Exception as e:
+    print(f"ERROR: Failed to load fake_news_detector: {e}", file=sys.stderr)
+    traceback.print_exc()
+    detector = None
+
+# Initialize URL analyzer
+try:
+    from url_analyzer import URLArticleAnalyzer
+except Exception as e:
+    print(f"WARNING: Failed to load url_analyzer: {e}", file=sys.stderr)
+    URLArticleAnalyzer = None
 
 
 @app.route('/')
@@ -34,7 +49,13 @@ def index():
 def analyze_text():
     """API endpoint for analyzing text."""
     try:
+        if not detector:
+            return jsonify({'error': 'Detector not initialized. Check server logs.'}), 500
+        
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
         text = data.get('text', '').strip()
 
         if not text:
@@ -50,13 +71,18 @@ def analyze_text():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"ERROR in analyze_text: {e}", file=sys.stderr)
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 
 @app.route('/api/analyze-url', methods=['POST'])
 def analyze_url():
     """API endpoint for analyzing articles from URLs."""
     try:
+        if not URLArticleAnalyzer:
+            return jsonify({'error': 'URL analyzer not available'}), 500
+        
         data = request.get_json()
         url = data.get('url', '').strip()
 
@@ -72,8 +98,11 @@ def analyze_url():
         })
 
     except ImportError as e:
-        return jsonify({'error': f'Missing dependencies: {str(e)}'}), 500
+        print(f"ERROR: Missing dependencies for URL analysis: {e}", file=sys.stderr)
+        return jsonify({'error': f'URL analysis requires: pip install requests beautifulsoup4'}), 500
     except Exception as e:
+        print(f"ERROR in analyze_url: {e}", file=sys.stderr)
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -140,3 +169,5 @@ def internal_error(e):
 if __name__ == '__main__':
     # Run locally with debug mode
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+CORS(app)  # Enable CORS for all routes

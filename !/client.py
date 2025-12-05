@@ -102,7 +102,7 @@ def search_news(service_id: str, query: str, **kwargs) -> dict:
         if not api_key:
             raise RuntimeError("NewsAPI requires an API key. Set NEWSAPI_API_KEY in env.")
         params = {"q": query, "pageSize": kwargs.get("pageSize", 20), "language": kwargs.get("language", "en")}
-        headers = {"Authorization": api_key}
+        headers = {"Authorization": api_key} 
         resp = requests.get(base, params=params, headers=headers, timeout=10)
         resp.raise_for_status()
         return resp.json()

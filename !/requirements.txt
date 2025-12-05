@@ -1,8 +1,4 @@
-requests
-SpeechRecognition
-transformers
-torch
-beautifulsoup4
 flask
+requests
+beautifulsoup4
 gunicorn
-pi
